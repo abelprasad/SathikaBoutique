@@ -45,6 +45,7 @@ backend/uploads/
 
 # TypeScript
 *.tsbuildinfo
+next-env.d.ts
 
 # Misc
 .turbo
