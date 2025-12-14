@@ -6,6 +6,8 @@ import path from 'path';
 import { connectDatabase } from './config/database';
 import productRoutes from './routes/productRoutes';
 import cartRoutes from './routes/cartRoutes';
+import authRoutes from './routes/authRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -36,8 +38,10 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.get('/api', (req: Request, res: Response) => {
   res.status(200).json({
@@ -45,8 +49,10 @@ app.get('/api', (req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
+      auth: '/api/auth',
       products: '/api/products',
       cart: '/api/cart/:sessionId',
+      upload: '/api/upload',
     },
   });
 });

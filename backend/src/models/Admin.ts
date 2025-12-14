@@ -48,21 +48,14 @@ const AdminSchema = new Schema(
 AdminSchema.index({ email: 1 });
 
 // Hash password before saving
-AdminSchema.pre('save', async function (next) {
-  const admin = this as IAdmin;
-
+AdminSchema.pre('save', async function () {
   // Only hash if password is modified
-  if (!admin.isModified('password')) {
-    return next();
+  if (!this.isModified('password')) {
+    return;
   }
 
-  try {
-    const salt = await bcrypt.genSalt(10);
-    admin.password = await bcrypt.hash(admin.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Method to compare passwords

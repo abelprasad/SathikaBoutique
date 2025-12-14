@@ -13,10 +13,19 @@ export const getAllProducts = async (req: Request, res: Response) => {
       limit = 12,
       search,
       featured,
+      status,
     } = req.query;
 
     // Build filter object
-    const filter: any = { status: 'published' };
+    const filter: any = {};
+
+    // Status filter - default to 'published' for public, allow 'all' or specific status
+    if (status && status !== 'all') {
+      filter.status = status;
+    } else if (!status) {
+      filter.status = 'published'; // Default for public view
+    }
+    // If status === 'all', don't add status filter
 
     if (category) {
       filter.category = category;

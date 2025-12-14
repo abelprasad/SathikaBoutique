@@ -9,6 +9,7 @@ import {
   deleteProduct,
   getCategories,
 } from '../controllers/productController';
+import { authenticateAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -19,9 +20,9 @@ router.get('/categories', getCategories);
 router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', getProductById);
 
-// Admin routes (will add auth middleware later)
-router.post('/', createProduct);
-router.put('/:id', updateProduct);
-router.delete('/:id', deleteProduct);
+// Admin routes (protected with authentication)
+router.post('/', authenticateAdmin, createProduct);
+router.put('/:id', authenticateAdmin, updateProduct);
+router.delete('/:id', authenticateAdmin, deleteProduct);
 
 export default router;
