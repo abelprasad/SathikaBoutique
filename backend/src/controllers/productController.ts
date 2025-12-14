@@ -1,6 +1,31 @@
 import { Request, Response } from 'express';
 import { Product } from '../models/Product';
 
+// Helper function to transform image URLs to full URLs
+const transformImageUrls = (product: any, req: Request) => {
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+  // Transform main images
+  if (product.images && Array.isArray(product.images)) {
+    product.images = product.images.map((img: any) => ({
+      ...img,
+      url: img.url.startsWith('http') ? img.url : `${baseUrl}${img.url}`
+    }));
+  }
+
+  // Transform variant images
+  if (product.variants && Array.isArray(product.variants)) {
+    product.variants = product.variants.map((variant: any) => ({
+      ...variant,
+      images: variant.images?.map((url: string) =>
+        url.startsWith('http') ? url : `${baseUrl}${url}`
+      ) || []
+    }));
+  }
+
+  return product;
+};
+
 // Get all products with filters, sorting, and pagination
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
@@ -58,13 +83,16 @@ export const getAllProducts = async (req: Request, res: Response) => {
     // Get total count for pagination
     const total = await Product.countDocuments(filter);
 
+    // Transform image URLs to full URLs
+    const transformedProducts = products.map(p => transformImageUrls(p.toObject(), req));
+
     res.status(200).json({
       status: 'success',
       results: products.length,
       total,
       page: Number(page),
       pages: Math.ceil(total / Number(limit)),
-      data: products,
+      data: transformedProducts,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -86,10 +114,13 @@ export const getFeaturedProducts = async (req: Request, res: Response) => {
       .sort('-createdAt')
       .limit(limit);
 
+    // Transform image URLs to full URLs
+    const transformedProducts = products.map(p => transformImageUrls(p.toObject(), req));
+
     res.status(200).json({
       status: 'success',
       results: products.length,
-      data: products,
+      data: transformedProducts,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -115,7 +146,7 @@ export const getProductBySlug = async (req: Request, res: Response) => {
 
     res.status(200).json({
       status: 'success',
-      data: product,
+      data: transformImageUrls(product.toObject(), req),
     });
   } catch (error: any) {
     res.status(500).json({
@@ -141,7 +172,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
     res.status(200).json({
       status: 'success',
-      data: product,
+      data: transformImageUrls(product.toObject(), req),
     });
   } catch (error: any) {
     res.status(500).json({

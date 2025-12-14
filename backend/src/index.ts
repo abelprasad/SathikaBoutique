@@ -17,11 +17,52 @@ const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+// Helmet security headers - disable CSP in development for easier debugging
+const helmetConfig: any = {
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+};
+
+// In production, enable strict CSP
+if (process.env.NODE_ENV === 'production') {
+  helmetConfig.contentSecurityPolicy = {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', process.env.CORS_ORIGIN || 'http://localhost:3000'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
+      scriptSrc: ["'self'"],
+    },
+  };
+} else {
+  // Disable CSP in development
+  helmetConfig.contentSecurityPolicy = false;
+}
+
+app.use(helmet(helmetConfig));
+// CORS configuration - flexible for development
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+
+    // In development, allow any localhost port
+    if (process.env.NODE_ENV !== 'production') {
+      if (origin.match(/^http:\/\/localhost:\d+$/)) {
+        return callback(null, true);
+      }
+    }
+
+    // In production, only allow specific origin
+    const allowedOrigins = [process.env.CORS_ORIGIN || 'http://localhost:3000'];
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

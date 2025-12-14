@@ -44,7 +44,7 @@ const ImageSchema = new Schema({
 const VariantSchema = new Schema({
   size: { type: String, required: true },
   color: { type: String, required: true },
-  sku: { type: String, required: true, unique: true },
+  sku: { type: String, required: true },
   price: { type: Number, required: true },
   compareAtPrice: { type: Number },
   stock: { type: Number, required: true, default: 0 },
@@ -86,6 +86,5 @@ ProductSchema.index({ slug: 1 });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ status: 1 });
 ProductSchema.index({ featured: 1 });
-ProductSchema.index({ 'variants.sku': 1 });
 
 export const Product = mongoose.model<IProduct>('Product', ProductSchema);

@@ -515,22 +515,29 @@ export default function ProductForm({
       </div>
 
       {/* Submit Buttons */}
-      <div className="flex items-center justify-end gap-4">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => window.history.back()}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" variant="primary" disabled={isLoading}>
-          {isLoading
-            ? 'Saving...'
-            : initialData
-            ? 'Update Product'
-            : 'Create Product'}
-        </Button>
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-end gap-4">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => window.history.back()}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isLoading}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            {isLoading
+              ? 'Saving...'
+              : initialData
+              ? 'Update Product'
+              : 'Create Product'}
+          </Button>
+        </div>
       </div>
     </form>
   );

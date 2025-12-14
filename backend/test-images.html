@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Test</title>
+    <style>
+        img { max-width: 300px; margin: 10px; border: 2px solid green; }
+        .error { border-color: red !important; }
+    </style>
+</head>
+<body>
+    <h1>Image Loading Test</h1>
+    <p>If you see images below with green borders, they're loading correctly.</p>
+
+    <h2>Direct Backend URLs (port 5000):</h2>
+    <img src="http://localhost:5000/uploads/products/DSCF2060-1765732782426-904447377.JPG"
+         onerror="this.className='error'; this.alt='FAILED: ' + this.src" />
+    <img src="http://localhost:5000/uploads/products/DSCF2070-1765732782982-792204626.JPG"
+         onerror="this.className='error'; this.alt='FAILED: ' + this.src" />
+
+    <h2>Frontend Proxy URLs (port 3000):</h2>
+    <img src="http://localhost:3000/uploads/products/DSCF2060-1765732782426-904447377.JPG"
+         onerror="this.className='error'; this.alt='FAILED: ' + this.src" />
+    <img src="http://localhost:3000/uploads/products/DSCF2070-1765732782982-792204626.JPG"
+         onerror="this.className='error'; this.alt='FAILED: ' + this.src" />
+
+    <h2>Relative URLs (should work on frontend):</h2>
+    <img src="/uploads/products/DSCF2060-1765732782426-904447377.JPG"
+         onerror="this.className='error'; this.alt='FAILED: ' + this.src" />
+    <img src="/uploads/products/DSCF2070-1765732782982-792204626.JPG"
+         onerror="this.className='error'; this.alt='FAILED: ' + this.src" />
+
+    <script>
+        console.log('Test page loaded');
+        document.querySelectorAll('img').forEach(img => {
+            img.onload = function() {
+                console.log('✓ Loaded:', this.src);
+            };
+            img.onerror = function() {
+                console.error('✗ Failed:', this.src);
+            };
+        });
+    </script>
+</body>
+</html>

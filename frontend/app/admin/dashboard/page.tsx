@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
 import AdminLayout from '@/components/admin/AdminLayout';
 import {
@@ -13,6 +14,7 @@ import {
 import { Card } from '@/components/ui/Card';
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   // TODO: Fetch real data from API
   const stats = [
     {
@@ -190,15 +192,24 @@ export default function AdminDashboardPage() {
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button className="p-4 bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => router.push('/admin/products/new')}
+                className="p-4 bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-shadow"
+              >
                 <Package className="w-6 h-6 mb-2" />
                 <span className="font-medium">Add Product</span>
               </button>
-              <button className="p-4 bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => router.push('/admin/orders')}
+                className="p-4 bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-shadow"
+              >
                 <ShoppingCart className="w-6 h-6 mb-2" />
                 <span className="font-medium">View Orders</span>
               </button>
-              <button className="p-4 bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => router.push('/admin/analytics')}
+                className="p-4 bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-shadow"
+              >
                 <TrendingUp className="w-6 h-6 mb-2" />
                 <span className="font-medium">Analytics</span>
               </button>

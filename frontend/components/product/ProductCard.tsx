@@ -16,36 +16,22 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/products/${product.slug}`}>
       <div className="group cursor-pointer">
-        <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3">
+        <div style={{ marginBottom: '12px' }}>
           {primaryImage ? (
-            <div className="relative w-full h-full">
-              <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-              <span className="text-gray-400 absolute inset-0 flex items-center justify-center text-sm">
-                {product.name}
-              </span>
-            </div>
+            <img
+              src={primaryImage.url}
+              alt={primaryImage.alt || product.name}
+              style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block'
+              }}
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <span className="text-gray-400 text-sm">No image</span>
+            <div style={{ padding: '20px', backgroundColor: '#e5e7eb' }}>
+              <span style={{ color: '#9ca3af' }}>No image</span>
             </div>
           )}
-
-          {/* Badges */}
-          <div className="absolute top-2 right-2 flex flex-col gap-2">
-            {product.featured && (
-              <Badge variant="info" className="shadow-md">
-                Featured
-              </Badge>
-            )}
-            {hasDiscount && (
-              <Badge variant="danger" className="shadow-md">
-                Sale
-              </Badge>
-            )}
-          </div>
-
-          {/* Hover overlay */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300" />
         </div>
 
         <div>
