@@ -10,6 +10,7 @@ node_modules/
 /build
 /dist
 /.next/
+.next/
 /out/
 
 # Environment variables
@@ -51,6 +52,7 @@ next-env.d.ts
 .turbo
 .cache
 .parcel-cache
+nul
 
 # Project-specific
 .claude/
