@@ -1,6 +1,13 @@
 import axios from 'axios';
 import type { ProductsResponse, SingleProductResponse } from '@/types/product';
 import type { CartResponse, AddToCartRequest } from '@/types/cart';
+import type {
+  AuthResponse,
+  CurrentAdminResponse,
+  LogoutResponse,
+  LoginRequest,
+  RegisterRequest
+} from '@/types/admin';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -91,6 +98,78 @@ export const cartApi = {
   // Clear cart
   clear: async (sessionId: string): Promise<CartResponse> => {
     const response = await api.delete(`/api/cart/${sessionId}`);
+    return response.data;
+  },
+};
+
+// Admin Auth API calls
+export const adminAuthApi = {
+  // Login admin
+  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
+    const response = await api.post('/api/auth/login', credentials);
+    return response.data;
+  },
+
+  // Register admin
+  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+    const response = await api.post('/api/auth/register', data);
+    return response.data;
+  },
+
+  // Get current admin
+  getCurrentAdmin: async (token: string): Promise<CurrentAdminResponse> => {
+    const response = await api.get('/api/auth/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  },
+
+  // Logout admin
+  logout: async (token: string): Promise<LogoutResponse> => {
+    const response = await api.post(
+      '/api/auth/logout',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  },
+};
+
+// Admin Product API calls (authenticated)
+export const adminProductApi = {
+  // Create product
+  create: async (token: string, productData: any): Promise<any> => {
+    const response = await api.post('/api/products', productData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  },
+
+  // Update product
+  update: async (token: string, productId: string, productData: any): Promise<any> => {
+    const response = await api.put(`/api/products/${productId}`, productData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  },
+
+  // Delete product
+  delete: async (token: string, productId: string): Promise<any> => {
+    const response = await api.delete(`/api/products/${productId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   },
 };
