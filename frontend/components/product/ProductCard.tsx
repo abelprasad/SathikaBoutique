@@ -15,22 +15,15 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/products/${product.slug}`}>
-      <div className="group cursor-pointer">
+      <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-2">
         {/* Image Container */}
-        <div
-          className="relative overflow-hidden rounded-lg transition-all duration-300 mb-3 shadow-md group-hover:shadow-xl"
-          style={{
-            border: '4px solid #C9A24D'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#8B1E2D'}
-          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#C9A24D'}
-        >
-          <div className="relative aspect-square bg-ivory">
+        <div className="relative overflow-hidden rounded-2xl transition-all duration-500 mb-4 shadow-[0_8px_30px_rgba(0,0,0,0.12)] group-hover:shadow-[0_20px_60px_rgba(139,30,45,0.25)] ring-1 ring-[#C9A24D]/20 group-hover:ring-[#8B1E2D]/40">
+          <div className="relative aspect-square bg-gradient-to-br from-ivory to-white overflow-hidden">
             {primaryImage ? (
               <img
                 src={primaryImage.url}
                 alt={primaryImage.alt || product.name}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 loading="lazy"
               />
             ) : (
@@ -38,6 +31,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <span className="text-warmGrey text-sm">No image</span>
               </div>
             )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
 
           {/* Badges */}
@@ -58,23 +52,23 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Product Info */}
-        <div>
-          <p className="text-xs font-semibold mb-1 uppercase tracking-wide" style={{ color: '#8B1E2D' }}>{product.category}</p>
-          <h3 className="font-display text-base font-semibold text-black mb-2 line-clamp-2 transition-colors group-hover:text-[#8B1E2D]">
+        <div className="space-y-3 bg-gradient-to-b from-white to-ivory/30 p-4 rounded-b-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: '#8B1E2D' }}>{product.category}</p>
+          <h3 className="font-display text-lg font-semibold text-black mb-2 line-clamp-2 transition-colors group-hover:text-[#8B1E2D] leading-snug">
             {product.name}
           </h3>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-lg" style={{ color: '#8B1E2D' }}>
+          <div className="flex items-baseline gap-3">
+            <span className="font-display font-bold text-2xl" style={{ color: '#8B1E2D' }}>
               {formatPrice(lowestPrice)}
             </span>
             {hasDiscount && product.variants[0].compareAtPrice && (
-              <span className="text-sm line-through" style={{ color: '#6E6E6E' }}>
+              <span className="text-base line-through font-light" style={{ color: '#6E6E6E' }}>
                 {formatPrice(product.variants[0].compareAtPrice)}
               </span>
             )}
           </div>
           {product.variants.length > 1 && (
-            <p className="text-xs font-medium mt-1" style={{ color: '#C9A24D' }}>
+            <p className="text-xs font-medium opacity-70" style={{ color: '#C9A24D' }}>
               {product.variants.length} variants available
             </p>
           )}
