@@ -9,30 +9,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#fdf2f8',
-          100: '#fce7f3',
-          200: '#fbcfe8',
-          300: '#f9a8d4',
-          400: '#f472b6',
-          500: '#ec4899',
-          600: '#db2777',
-          700: '#be185d',
-          800: '#9d174d',
-          900: '#831843',
+        brand: {
+          ruby: '#8B1E2D',
+          crimson: '#B23A48',
+          gold: '#C9A24D',
+          champagne: '#E6D3A3',
         },
-        secondary: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-        },
+        ivory: '#FAF8F4',
+        charcoal: '#1C1C1C',
+        warmGrey: '#6E6E6E',
+      },
+      fontFamily: {
+        display: ['Playfair Display', 'serif'],
+        body: ['Inter', 'sans-serif'],
+      },
+      backgroundColor: {
+        'ivory': '#FAF8F4',
+      },
+      textColor: {
+        'charcoal': '#1C1C1C',
+        'warmGrey': '#6E6E6E',
       },
     },
   },

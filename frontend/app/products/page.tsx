@@ -49,20 +49,20 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-ivory">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-display font-bold mb-3" style={{ color: '#8B1E2D' }}>
             Shop All Products
           </h1>
-          <p className="text-gray-600">
+          <p className="text-black text-lg font-medium">
             Discover our collection of {total} beautiful items
           </p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8" style={{ border: '4px solid #C9A24D' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select
               label="Category"
@@ -117,7 +117,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">No products found</p>
+            <p className="text-charcoal text-lg mb-4">No products found</p>
             <Button
               variant="primary"
               onClick={() => {
@@ -133,7 +133,7 @@ export default function ProductsPage() {
 
         {/* Pagination */}
         {!loading && products.length > 0 && (
-          <div className="mt-8 flex justify-center gap-2">
+          <div className="mt-8 flex justify-center gap-3">
             <Button
               variant="secondary"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -141,7 +141,7 @@ export default function ProductsPage() {
             >
               Previous
             </Button>
-            <span className="flex items-center px-4 text-gray-700">
+            <span className="flex items-center px-6 py-2 bg-white rounded-lg text-black font-semibold" style={{ border: '2px solid #C9A24D' }}>
               Page {page} of {Math.ceil(total / 12)}
             </span>
             <Button

@@ -16,41 +16,65 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/products/${product.slug}`}>
       <div className="group cursor-pointer">
-        <div style={{ marginBottom: '12px' }}>
-          {primaryImage ? (
-            <img
-              src={primaryImage.url}
-              alt={primaryImage.alt || product.name}
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block'
-              }}
-            />
-          ) : (
-            <div style={{ padding: '20px', backgroundColor: '#e5e7eb' }}>
-              <span style={{ color: '#9ca3af' }}>No image</span>
+        {/* Image Container */}
+        <div
+          className="relative overflow-hidden rounded-lg transition-all duration-300 mb-3 shadow-md group-hover:shadow-xl"
+          style={{
+            border: '4px solid #C9A24D'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#8B1E2D'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#C9A24D'}
+        >
+          <div className="relative aspect-square bg-ivory">
+            {primaryImage ? (
+              <img
+                src={primaryImage.url}
+                alt={primaryImage.alt || product.name}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-warmGrey text-sm">No image</span>
+              </div>
+            )}
+          </div>
+
+          {/* Badges */}
+          {(product.featured || hasDiscount) && (
+            <div className="absolute top-2 right-2 flex flex-col gap-2">
+              {product.featured && (
+                <Badge variant="info" className="text-white shadow-lg border-2 border-white" style={{ backgroundColor: '#C9A24D' }}>
+                  Featured
+                </Badge>
+              )}
+              {hasDiscount && (
+                <Badge variant="danger" className="text-white shadow-lg border-2 border-white" style={{ backgroundColor: '#8B1E2D' }}>
+                  Sale
+                </Badge>
+              )}
             </div>
           )}
         </div>
 
+        {/* Product Info */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">{product.category}</p>
-          <h3 className="font-medium text-gray-900 mb-1 line-clamp-2 group-hover:text-pink-600 transition-colors">
+          <p className="text-xs font-semibold mb-1 uppercase tracking-wide" style={{ color: '#8B1E2D' }}>{product.category}</p>
+          <h3 className="font-display text-base font-semibold text-black mb-2 line-clamp-2 transition-colors group-hover:text-[#8B1E2D]">
             {product.name}
           </h3>
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900">
+            <span className="font-bold text-lg" style={{ color: '#8B1E2D' }}>
               {formatPrice(lowestPrice)}
             </span>
             {hasDiscount && product.variants[0].compareAtPrice && (
-              <span className="text-sm text-gray-500 line-through">
+              <span className="text-sm line-through" style={{ color: '#6E6E6E' }}>
                 {formatPrice(product.variants[0].compareAtPrice)}
               </span>
             )}
           </div>
           {product.variants.length > 1 && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs font-medium mt-1" style={{ color: '#C9A24D' }}>
               {product.variants.length} variants available
             </p>
           )}

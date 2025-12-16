@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-ruby: #8B1E2D;
+  --color-brand-crimson: #B23A48;
+  --color-brand-gold: #C9A24D;
+  --color-brand-champagne: #E6D3A3;
+  --color-ivory: #FAF8F4;
+  --color-charcoal: #1C1C1C;
+  --color-warmGrey: #6E6E6E;
+}
+
 @layer base {
   body {
-    @apply bg-white text-gray-900 antialiased;
+    background-color: #FAF8F4;
+    color: #1C1C1C;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
   }
 }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { productApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 import { Button, Badge, Spinner, Select } from '@/components/ui';
@@ -86,53 +87,55 @@ export default function ProductDetailPage({
   const hasDiscount = selectedVariant?.compareAtPrice && selectedVariant.compareAtPrice > selectedVariant.price;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-ivory">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="mb-8 text-sm">
-          <ol className="flex items-center space-x-2 text-gray-500">
+          <ol className="flex items-center space-x-2 text-charcoal font-medium">
             <li>
-              <a href="/" className="hover:text-pink-600">
+              <a href="/" className="hover:text-brand-ruby transition-colors">
                 Home
               </a>
             </li>
             <li>/</li>
             <li>
-              <a href="/products" className="hover:text-pink-600">
+              <a href="/products" className="hover:text-brand-ruby transition-colors">
                 Products
               </a>
             </li>
             <li>/</li>
-            <li className="text-gray-900">{product.name}</li>
+            <li className="text-brand-ruby font-semibold">{product.name}</li>
           </ol>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Images */}
           <div>
-            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+            <div className="relative aspect-square bg-ivory rounded-lg overflow-hidden mb-4 border-4 border-brand-gold shadow-xl">
               {primaryImage ? (
-                <div className="relative w-full h-full">
-                  <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-                  <span className="text-gray-400 absolute inset-0 flex items-center justify-center text-sm">
-                    {product.name}
-                  </span>
-                </div>
+                <img
+                  src={primaryImage.url}
+                  alt={primaryImage.alt || product.name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                  <span className="text-gray-400">No image</span>
+                <div className="w-full h-full flex items-center justify-center bg-ivory">
+                  <span className="text-warmGrey">No image</span>
                 </div>
               )}
             </div>
 
-            {/* Thumbnail Gallery (future enhancement) */}
+            {/* Thumbnail Gallery */}
             {product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
                 {product.images.slice(0, 4).map((image, index) => (
-                  <div key={index} className="aspect-square bg-gray-100 rounded cursor-pointer hover:opacity-75">
-                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
-                      {index + 1}
-                    </div>
+                  <div key={index} className="relative aspect-square bg-ivory rounded border-2 border-brand-gold overflow-hidden cursor-pointer hover:border-brand-ruby transition-all shadow-md hover:shadow-lg">
+                    <img
+                      src={image.url}
+                      alt={image.alt || `${product.name} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
                 ))}
               </div>
@@ -167,7 +170,7 @@ export default function ProductDetailPage({
             </div>
 
             {/* Description */}
-            <p className="text-gray-700 mb-6 leading-relaxed">
+            <p className="text-charcoal mb-6 leading-relaxed">
               {product.description}
             </p>
 
@@ -175,7 +178,7 @@ export default function ProductDetailPage({
             {product.variants.length > 1 && (
               <div className="mb-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     Size
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -191,10 +194,10 @@ export default function ProductDetailPage({
                           disabled={!isAvailable}
                           className={`px-4 py-2 border rounded-lg font-medium transition-colors ${
                             isSelected
-                              ? 'border-pink-600 bg-pink-50 text-pink-600'
+                              ? 'border-brand-ruby bg-brand-ruby text-white'
                               : isAvailable
-                              ? 'border-gray-300 hover:border-pink-600'
-                              : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                              ? 'border-brand-champagne hover:border-brand-gold'
+                              : 'border-brand-champagne/50 bg-ivory text-warmGrey cursor-not-allowed'
                           }`}
                         >
                           {size}
@@ -207,7 +210,7 @@ export default function ProductDetailPage({
                 {/* Color Selection */}
                 {[...new Set(product.variants.map((v) => v.color))].length > 1 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-black mb-2">
                       Color
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -222,8 +225,8 @@ export default function ProductDetailPage({
                             }}
                             className={`px-4 py-2 border rounded-lg font-medium transition-colors ${
                               isSelected
-                                ? 'border-pink-600 bg-pink-50 text-pink-600'
-                                : 'border-gray-300 hover:border-pink-600'
+                                ? 'border-brand-ruby bg-brand-ruby text-white'
+                                : 'border-brand-champagne hover:border-brand-gold'
                             }`}
                           >
                             {color}
@@ -240,7 +243,7 @@ export default function ProductDetailPage({
             {selectedVariant && (
               <div className="mb-6">
                 {selectedVariant.stock > 0 ? (
-                  <div className="flex items-center gap-2 text-green-600">
+                  <div className="flex items-center gap-2 text-brand-gold">
                     <Check className="h-5 w-5" />
                     <span className="font-medium">
                       {selectedVariant.stock > 10
@@ -249,56 +252,48 @@ export default function ProductDetailPage({
                     </span>
                   </div>
                 ) : (
-                  <div className="text-red-600 font-medium">Out of Stock</div>
+                  <div className="text-brand-ruby font-medium">Out of Stock</div>
                 )}
               </div>
             )}
 
             {/* Quantity & Add to Cart */}
-            <div className="mb-6">
-              <div className="flex gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Quantity
-                  </label>
-                  <select
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="border border-gray-300 rounded-lg px-4 py-2 w-20"
-                  >
-                    {[1, 2, 3, 4, 5].map((num) => (
-                      <option key={num} value={num}>
-                        {num}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    &nbsp;
-                  </label>
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={!selectedVariant || selectedVariant.stock < 1 || addingToCart}
-                    isLoading={addingToCart}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Add to Cart
-                  </Button>
-                </div>
+            <div className="mb-6 bg-ivory p-6 rounded-lg border-2 border-brand-gold shadow-lg">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-black mb-2">
+                  Quantity
+                </label>
+                <select
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  className="border-2 border-brand-champagne rounded-lg px-4 py-3 w-full focus:border-brand-gold focus:outline-none text-lg"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              <button
+                onClick={handleAddToCart}
+                disabled={!selectedVariant || selectedVariant.stock < 1 || addingToCart}
+                className="w-full bg-brand-ruby text-white text-xl font-bold py-4 px-6 rounded-lg shadow-md hover:bg-brand-crimson disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                style={{ minHeight: '60px' }}
+              >
+                <ShoppingCart className="h-6 w-6 mr-3" />
+                {addingToCart ? 'Adding to Cart...' : 'Add to Cart'}
+              </button>
 
               {/* Success Message */}
               {addedToCart && (
-                <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
-                  <Check className="h-5 w-5" />
-                  <span>Added to cart successfully!</span>
+                <div className="mt-4 bg-brand-gold/20 border-2 border-brand-gold text-black px-4 py-3 rounded-lg flex items-center gap-2">
+                  <Check className="h-5 w-5 text-brand-gold" />
+                  <span className="font-medium">Added to cart successfully!</span>
                   <button
                     onClick={() => router.push('/cart')}
-                    className="ml-auto text-green-700 hover:text-green-900 font-medium underline"
+                    className="ml-auto text-brand-ruby hover:text-brand-crimson font-semibold underline"
                   >
                     View Cart
                   </button>
@@ -307,21 +302,21 @@ export default function ProductDetailPage({
             </div>
 
             {/* Product Details */}
-            <div className="border-t pt-6">
-              <h3 className="font-medium text-gray-900 mb-2">Product Details</h3>
+            <div className="border-t-2 border-brand-gold pt-6 bg-brand-champagne/10 p-4 rounded-lg">
+              <h3 className="font-bold text-brand-ruby mb-3 text-lg">Product Details</h3>
               <dl className="space-y-2 text-sm">
                 <div className="flex">
-                  <dt className="text-gray-600 w-24">SKU:</dt>
-                  <dd className="text-gray-900">{selectedVariant?.sku}</dd>
+                  <dt className="text-charcoal font-semibold w-24">SKU:</dt>
+                  <dd className="text-black">{selectedVariant?.sku}</dd>
                 </div>
                 <div className="flex">
-                  <dt className="text-gray-600 w-24">Category:</dt>
-                  <dd className="text-gray-900">{product.category}</dd>
+                  <dt className="text-charcoal font-semibold w-24">Category:</dt>
+                  <dd className="text-brand-ruby font-medium">{product.category}</dd>
                 </div>
                 {product.tags.length > 0 && (
                   <div className="flex">
-                    <dt className="text-gray-600 w-24">Tags:</dt>
-                    <dd className="text-gray-900">{product.tags.join(', ')}</dd>
+                    <dt className="text-charcoal font-semibold w-24">Tags:</dt>
+                    <dd className="text-black">{product.tags.join(', ')}</dd>
                   </div>
                 )}
               </dl>

@@ -55,11 +55,11 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-ivory flex items-center justify-center">
         <div className="text-center">
-          <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
-          <p className="text-gray-600 mb-6">Add some products to get started!</p>
+          <ShoppingBag className="h-16 w-16 text-brand-gold mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold text-black mb-2">Your cart is empty</h1>
+          <p className="text-charcoal mb-6">Add some products to get started!</p>
           <Button onClick={() => router.push('/products')}>
             Continue Shopping
           </Button>
@@ -74,14 +74,14 @@ export default function CartPage() {
   const total = subtotal + estimatedShipping + estimatedTax;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-ivory">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-display font-bold text-black mb-2">
             Shopping Cart
           </h1>
-          <p className="text-gray-600">
+          <p className="text-charcoal">
             {getItemCount()} {getItemCount() === 1 ? 'item' : 'items'} in your cart
           </p>
         </div>
@@ -95,16 +95,30 @@ export default function CartPage() {
 
               if (!product || !variant) return null;
 
+              const primaryImage = product.images?.find((img: any) => img.isPrimary) || product.images?.[0];
+
               return (
-                <div key={item._id} className="bg-white rounded-lg shadow-sm p-6">
+                <div key={item._id} className="bg-white rounded-lg border border-brand-champagne/30 shadow-sm p-6">
                   <div className="flex gap-6">
                     {/* Product Image */}
                     <div className="flex-shrink-0">
-                      <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <span className="text-xs text-gray-400 text-center px-2">
-                          {product.name}
-                        </span>
-                      </div>
+                      <Link href={`/products/${product.slug}`}>
+                        <div className="w-24 h-24 bg-ivory rounded-lg overflow-hidden border border-brand-champagne/40">
+                          {primaryImage ? (
+                            <img
+                              src={primaryImage.url}
+                              alt={primaryImage.alt || product.name}
+                              className="w-full h-full object-cover hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-xs text-warmGrey text-center px-2">
+                                No image
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
                     </div>
 
                     {/* Product Info */}
@@ -113,25 +127,25 @@ export default function CartPage() {
                         <div>
                           <Link
                             href={`/products/${product.slug}`}
-                            className="font-medium text-gray-900 hover:text-pink-600"
+                            className="font-medium text-black hover:text-brand-ruby transition-colors"
                           >
                             {product.name}
                           </Link>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-charcoal mt-1">
                             {variant.size && <span>Size: {variant.size}</span>}
                             {variant.size && variant.color && <span> • </span>}
                             {variant.color && <span>Color: {variant.color}</span>}
                           </p>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-warmGrey mt-1">
                             SKU: {variant.sku}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-brand-ruby">
                             {formatPrice(variant.price)}
                           </p>
                           {variant.compareAtPrice && (
-                            <p className="text-sm text-gray-500 line-through">
+                            <p className="text-sm text-warmGrey line-through">
                               {formatPrice(variant.compareAtPrice)}
                             </p>
                           )}
@@ -144,22 +158,22 @@ export default function CartPage() {
                           <button
                             onClick={() => handleUpdateQuantity(item._id, item.quantity, -1)}
                             disabled={loading || item.quantity <= 1}
-                            className="p-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-1 border border-brand-champagne rounded hover:bg-brand-champagne/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            <Minus className="h-4 w-4" />
+                            <Minus className="h-4 w-4 text-charcoal" />
                           </button>
-                          <span className="text-gray-900 font-medium w-8 text-center">
+                          <span className="text-black font-medium w-8 text-center">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => handleUpdateQuantity(item._id, item.quantity, 1)}
                             disabled={loading || item.quantity >= variant.stock}
-                            className="p-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-1 border border-brand-champagne rounded hover:bg-brand-champagne/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-4 w-4 text-charcoal" />
                           </button>
                           {variant.stock < 5 && (
-                            <span className="text-sm text-orange-600 ml-2">
+                            <span className="text-sm text-brand-ruby ml-2">
                               Only {variant.stock} left
                             </span>
                           )}
@@ -168,7 +182,7 @@ export default function CartPage() {
                         <button
                           onClick={() => handleRemoveItem(item._id)}
                           disabled={loading}
-                          className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                          className="text-brand-ruby hover:text-brand-crimson disabled:opacity-50 transition-colors"
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>
@@ -193,40 +207,40 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white rounded-lg border border-brand-champagne/30 shadow-sm p-6 sticky top-24">
+              <h2 className="text-lg font-display font-semibold text-black mb-4">
                 Order Summary
               </h2>
 
               <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-charcoal">
                   <span>Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-charcoal">
                   <span>Shipping</span>
                   <span>
                     {estimatedShipping === 0 ? (
-                      <span className="text-green-600">FREE</span>
+                      <span className="text-brand-gold font-medium">FREE</span>
                     ) : (
                       formatPrice(estimatedShipping)
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-charcoal">
                   <span>Estimated Tax</span>
                   <span>{formatPrice(estimatedTax)}</span>
                 </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between text-lg font-semibold text-gray-900">
+                <div className="border-t border-brand-champagne pt-3">
+                  <div className="flex justify-between text-lg font-semibold text-black">
                     <span>Total</span>
-                    <span>{formatPrice(total)}</span>
+                    <span className="text-brand-ruby">{formatPrice(total)}</span>
                   </div>
                 </div>
               </div>
 
               {subtotal < 100 && (
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-charcoal mb-4 bg-brand-champagne/20 p-3 rounded">
                   Add {formatPrice(100 - subtotal)} more for free shipping!
                 </p>
               )}
