@@ -1,0 +1,1238 @@
+# Sathika Boutique Enhancement Implementation Plan
+
+## Overview
+
+Enhancing the existing Sathika Boutique e-commerce website with UI/UX improvements, performance optimizations, and feature additions including cart persistence refinements, responsive design enhancements, and better product organization.
+
+## Current State Analysis
+
+The site is a functional e-commerce platform with:
+
+- Cart persistence working via Zustand + localStorage + backend MongoDB session
+- Basic responsive design (mobile menu, product grids adapt)
+- Product filtering (category, sort) and pagination (12 per page)
+- Premium brand design system (Deep Ruby #8B1E2D, Antique Gold #C9A24D)
+- Next.js 16 App Router frontend with React 19, TypeScript, Tailwind CSS
+- Express backend with MongoDB
+- Incomplete Stripe integration (mock checkout only)
+
+**Key files:**
+
+- `/frontend/store/cartStore.ts` - Cart state management with backend sync
+- `/frontend/app/products/page.tsx` - Product listing with filters
+- `/frontend/components/layout/Header.tsx` - Navigation with cart badge
+- `/frontend/app/cart/page.tsx` - Cart page with order summary
+- `/frontend/app/checkout/page.tsx` - Multi-step checkout (currently mock)
+
+## Desired End State
+
+A polished, performant e-commerce experience with:
+
+- Enhanced UI/UX following design system consistently
+- Optimized performance (image loading, bundle size, render performance)
+- Refined cart experience with better persistence and error handling
+- Improved responsive design across all breakpoints
+- Better product organization and discovery features
+- [Additional features to be specified based on priorities]
+
+---
+
+## Enhancement Areas to Define
+
+### 1. UI/UX Improvements
+
+#### 1.1 Animation System
+
+**Goal:** Create fluid, premium feel with smooth transitions throughout
+
+**Implementation approach:** Framer Motion for complex animations, Tailwind transitions for simple ones
+
+**Page Transitions:**
+
+- Add Framer Motion AnimatePresence wrapper in root layout
+- Fade + slight slide-up (20px) on page enter
+- 300ms duration with easeOut easing
+- All route changes get smooth transition
+
+**Product Card Animations:**
+
+- **File:** `/frontend/components/product/ProductCard.tsx`
+- Current: Basic CSS hover with scale-105
+- Enhanced:
+- Staggered reveal on page load (items appear one by one, 50ms delay each)
+- Hover: Smooth scale to 1.03, lift shadow, gold border intensifies
+- Image zoom on hover (scale 1.1 within container)
+- Badge animations (featured/sale badges pulse gently)
+- Add to cart button slides up from bottom on hover
+
+**Cart Badge Micro-interaction:**
+
+- **File:** `/frontend/components/layout/Header.tsx` (line 85-89)
+- When item added: Badge scales to 1.3 then back to 1 (bounce effect)
+- Number change: Flip animation for count update
+- Use Framer Motion animate prop triggered by cartItemCount change
+
+**Button Interactions:**
+
+- **Files:** `/frontend/components/ui/Button.tsx` and all button instances
+- Active state: Scale down to 0.97 on click
+- Loading state: Spinner fades in, text fades out
+- Ripple effect on click (outward circle animation)
+- Hover: Subtle lift with shadow increase
+
+**Form Field Interactions:**
+
+- **Files:** `/frontend/components/ui/Input.tsx`, `/frontend/components/ui/Select.tsx`
+- Focus: Border color animates from gray to gold, slight scale 1.01
+- Error state: Shake animation (3px left-right oscillation, 3 times)
+- Success: Green checkmark icon fades in on right side
+
+**Modal/Dialog Animations:**
+
+- Backdrop: Fade in from transparent to dark overlay
+- Content: Scale from 0.95 to 1 with fade, spring physics
+- Close: Reverse animation (scale down, fade out)
+
+**Scroll Animations:**
+
+- Homepage sections fade in as they enter viewport
+- Use Intersection Observer + Framer Motion
+- Trigger once (not on every scroll)
+
+**Loading States:**
+
+- Skeleton screens for product grids (shimmer effect)
+- Spinner with smooth rotation
+- Progress indicators for checkout steps animate on change
+
+### 2. Performance Optimizations
+
+#### 2.1 Image Optimization
+
+**Goal:** Faster page loads, automatic format conversion, proper lazy loading
+
+**Next.js Image Component Migration:**
+
+- **File:** `/frontend/components/product/ProductCard.tsx` (line 23-28)
+- Replace `<img>` with Next.js `<Image>`
+- Add `fill` prop with `object-fit: cover`
+- Priority false (let Next.js handle lazy loading)
+- Sizes prop: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+- Automatic WebP/AVIF conversion by Next.js
+- **File:** `/frontend/app/page.tsx` (hero image)
+- Already uses Next.js Image with priority
+- Verify priority={true} for above-fold images
+- **File:** `/frontend/app/products/[slug]/page.tsx` (product detail images)
+- Convert to Next.js Image component
+- Main image: priority={true}
+- Thumbnail gallery: priority={false}
+- Add image zoom on click functionality
+- **File:** `/frontend/app/cart/page.tsx` (cart item images)
+- Convert to Next.js Image
+- Small size optimization: 80x80px
+
+**Next.js Image Configuration:**
+
+- **File:** `/frontend/next.config.js`
+- Add backend domain to remotePatterns: `localhost:5000`, production backend domain
+- Configure image formats: ['image/webp', 'image/avif']
+- Device sizes: [640, 750, 828, 1080, 1200, 1920]
+- Image sizes: [16, 32, 48, 64, 96, 128, 256, 384]
+
+**Backend Image Optimization:**
+
+- Keep existing Sharp optimization script at `/backend/scripts/optimize-images.js`
+- No changes needed (already resizes to 1200px, quality 85)
+
+#### 2.2 Bundle Size Optimization
+
+**Analyze Current Bundle:**
+
+- Run `npm run build` and check `.next/analyze` output
+- Target: Main bundle < 200KB gzipped
+
+**Code Splitting Strategy:**
+
+- **Admin routes:** Lazy load entire admin section
+- **File:** `/frontend/app/admin/layout.tsx`
+- Wrap AdminLayout with React.lazy()
+- Admin pages only load when accessed
+- Estimated savings: \~80KB
+- **Framer Motion:** Only import used components
+- Instead of: `import { motion } from 'framer-motion'`
+- Use: `import { motion } from 'framer-motion/dist/framer-motion'` or named imports
+- Use LazyMotion for reduced bundle: `import { LazyMotion, domAnimation, m } from 'framer-motion'`
+- **Lucide Icons:** Optimize imports
+- Current: Individual imports (already good)
+- Ensure tree-shaking works: verify in bundle analyzer
+- **Zustand:** Already optimal (tiny library)
+
+**Remove Unused Dependencies:**
+
+- Check package.json for unused packages
+- Likely candidates: Any testing libraries not in use, duplicate dependencies
+
+**Dynamic Imports for Heavy Components:**
+
+- **Image Upload** (admin only): `/frontend/components/admin/ImageUpload.tsx`
+- Lazy load with React.lazy() + Suspense
+- **Rich Text Editor** (if added): Dynamic import
+- **Charts/Analytics** (if added): Dynamic import
+
+#### 2.3 Render Performance
+
+**React 19 Optimizations:**
+
+- Use `use client` directive only where needed (already mostly correct)
+- Verify server components: product listing, static pages should be RSC
+
+**Memoization:**
+
+- **File:** `/frontend/components/product/ProductCard.tsx`
+- Wrap with React.memo to prevent unnecessary re-renders
+- Memoize price calculations (lowestPrice, hasDiscount)
+- **File:** `/frontend/store/cartStore.ts`
+- Selectors already return computed values (good)
+- Consider splitting store for better granularity if performance issues arise
+
+**Virtualization for Long Lists:**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Current: Pagination (12 per page) - already good, no need for virtualization
+- If pagination removed in future: Use react-window or similar
+
+**Debouncing/Throttling:**
+
+- Search input (if added): 300ms debounce
+- Filter changes: Already triggers new API call (good)
+- Scroll events (for scroll animations): Throttle to 100ms
+
+#### 2.4 Loading Performance
+
+**Route Prefetching:**
+
+- Next.js Link components already prefetch (keep as-is)
+- Disable prefetch on admin links: `prefetch={false}`
+
+**API Response Caching:**
+
+- **Frontend:** Use SWR or React Query for stale-while-revalidate
+- Or keep current approach with React state (simpler)
+- Add Cache-Control headers on backend responses
+- **Backend API:**
+- **File:** `/backend/src/routes/products.js`
+- Add response caching for product list: 5 minutes
+- Featured products: 10 minutes cache
+- Individual product: 1 minute cache
+- Use in-memory cache or Redis if available
+
+**Font Optimization:**
+
+- Already using Next.js font optimization (Playfair Display, Inter)
+- Verify fonts are subset and preloaded
+
+**Critical CSS:**
+
+- Next.js handles automatically with App Router
+- Ensure no blocking CSS imports
+
+#### 2.5 Monitoring
+
+**Add Performance Metrics:**
+
+- **File:** Create `/frontend/lib/analytics.ts`
+- Track Web Vitals: LCP, FID, CLS, FCP, TTFB
+- Use next/web-vitals built-in support
+- Log to console in dev, send to analytics in production
+
+**Lighthouse Goals:**
+
+- Performance: > 90
+- Accessibility: > 95
+- Best Practices: > 95
+- SEO: > 90
+
+### 3. Cart Persistence Refinements
+
+#### 3.1 Error Handling & Recovery
+
+**Goal:** Graceful degradation when backend unavailable, clear user feedback
+
+**Network Failure Handling:**
+
+- **File:** `/frontend/store/cartStore.ts`
+- Wrap all API calls in try-catch (already done)
+- Add retry logic: 3 attempts with exponential backoff (1s, 2s, 4s)
+- On persistent failure: Show toast notification "Cart temporarily unavailable, changes saved locally"
+- Queue failed operations in localStorage, retry when connection restored
+
+**Stock Validation:**
+
+- **Backend:** `/backend/src/routes/cart.js`
+- When adding item: Check variant.stock >= requested quantity
+- Return 400 error with message: "Only X items available"
+- Include available stock in error response
+- **Frontend:** `/frontend/store/cartStore.ts` addItem function
+- Catch 400 errors for stock issues
+- Display toast: "Only X items in stock" with available quantity
+- Auto-adjust quantity to max available (with user confirmation)
+
+**Cart Sync Issues:**
+
+- **Session ID mismatch:** If backend returns 404 for sessionId
+- Clear local cart state
+- Reinitialize with new session
+- Notify user: "Cart was reset due to sync issue"
+- **Stale cart data:** Backend returns different items than local
+- Backend is source of truth
+- Replace local state with backend response
+- Show subtle notification if items removed: "Cart updated"
+
+**Error Toast System:**
+
+- **File:** Create `/frontend/components/ui/Toast.tsx`
+- Position: Bottom-right corner
+- Types: error (red), success (green), warning (gold), info (blue)
+- Auto-dismiss after 5 seconds
+- Slide in/out animation
+- Close button (X icon)
+- **File:** Create `/frontend/store/toastStore.ts`
+- Zustand store for toast queue
+- Actions: showToast, dismissToast, clearAll
+- Max 3 toasts visible at once (queue older ones)
+
+#### 3.2 Optimistic Updates with Rollback
+
+**Goal:** Instant UI feedback while background sync happens
+
+**Implementation Pattern:**
+
+- **File:** `/frontend/store/cartStore.ts`
+
+**Update Quantity (optimistic):**
+
+- Current: Sets loading=true, waits for backend, updates items
+- Enhanced:
+
+1. Immediately update local items array (optimistic)
+2. Set specific item as "syncing" (not global loading)
+3. Make backend API call in background
+4. On success: Mark as synced, show checkmark briefly
+5. On failure: Rollback to previous quantity, show error toast
+6. Store previous state for rollback
+
+**Add Item (optimistic):**
+
+- Immediately add item to local items with temporary ID
+- Show "Adding..." spinner on that specific item
+- Make API call in background
+- Replace temporary ID with real ID from backend
+- On failure: Remove optimistic item, show error
+
+**Remove Item (optimistic):**
+
+- Fade out item immediately
+- Keep in state as "removing: true"
+- Make API call in background
+- On success: Actually remove from array
+- On failure: Fade back in, show error
+
+**Visual Feedback:**
+
+- Item being synced: Subtle pulsing gold border
+- Successfully synced: Green checkmark icon (fades out after 1s)
+- Sync failed: Red X icon with retry button
+
+#### 3.3 Cart Expiry and Cleanup
+
+**Goal:** Prevent stale carts, clean up abandoned sessions
+
+**Backend Cart Expiry:**
+
+- **File:** `/backend/src/models/Cart.ts`
+- Add TTL index on MongoDB: expire after 7 days of inactivity
+- Add `lastActivity` timestamp field
+- Update `lastActivity` on every cart operation
+
+**Expired Cart Detection:**
+
+- **Backend:** When fetching cart by sessionId
+- If cart not found (expired or never existed): Return 404
+- Include helpful message: "Cart expired after 7 days"
+- **Frontend:** `/frontend/store/cartStore.ts` initializeCart
+- On 404 response: Clear localStorage sessionId
+- Generate new sessionId
+- Show toast: "Previous cart expired, starting fresh"
+
+**Cart Age Warning:**
+
+- **Backend:** Include cart `createdAt` in API responses
+- **Frontend:** `/frontend/app/cart/page.tsx`
+- If cart older than 5 days: Show banner at top
+- Message: "Your cart will expire in X days. Complete checkout soon!"
+- Dismiss button to hide banner
+
+**Abandoned Cart Cleanup (Admin):**
+
+- **Backend:** Create cleanup script `/backend/scripts/cleanup-carts.js`
+- Manually remove carts older than 30 days (even if TTL failed)
+- Run via cron job or manual trigger
+- Log cleanup stats
+
+**Stock Hold Prevention:**
+
+- Current: Cart items don't hold stock (good)
+- Maintain: Items can be sold while in someone's cart
+- At checkout: Final stock validation before payment
+- If insufficient stock: Remove item or reduce quantity
+- Show clear message: "X item(s) no longer available"
+
+#### 3.4 Cart Migration & Cross-Device
+
+**Goal:** Better UX for returning users (future enhancement placeholder)
+
+**Notes for future:**
+
+- Currently: Anonymous session-based carts (good for MVP)
+- Future: User accounts could merge cart on login
+- Consideration: localStorage sessionId + backend session works well for anonymous checkout
+
+### 4. Responsive Design Enhancements
+
+#### 4.1 Mobile-First Refinements (320px - 640px)
+
+**Goal:** Touch-friendly, thumb-zone optimized mobile experience
+
+**Touch Target Sizes:**
+
+- Minimum: 44x44px for all interactive elements
+- **File:** `/frontend/components/ui/Button.tsx`
+- Small buttons: Change min-height to 44px
+- Icon-only buttons: Ensure 44x44px tap area (add padding if needed)
+
+**Thumb Zone Optimization:**
+
+- **File:** `/frontend/app/cart/page.tsx`
+- Cart quantity controls (Plus/Minus): Increase touch area to 48x48px
+- Position: Keep in easy reach (middle-lower screen)
+- Remove button: Move to left side (easier for thumb)
+- **File:** `/frontend/components/layout/Header.tsx`
+- Mobile menu button: Already 44x44px (good)
+- Cart icon: Increase touch area to 48x48px
+- Position: Right side (natural thumb position)
+
+**Mobile Navigation:**
+
+- **File:** `/frontend/components/layout/Header.tsx`
+- Mobile menu: Full-screen overlay (not just dropdown)
+- Close button: Top-right (48x48px)
+- Menu items: Larger spacing (16px vertical padding)
+- Add subtle background blur effect
+
+**Mobile Product Cards:**
+
+- **File:** `/frontend/components/product/ProductCard.tsx`
+- Single column on mobile (already correct)
+- Card tap area: Entire card clickable (already correct with Link wrapper)
+- Image: Minimum 280x280px for clarity
+- Price: Larger font (text-xl to text-2xl)
+
+**Mobile Cart Page:**
+
+- **File:** `/frontend/app/cart/page.tsx` (line 89-206)
+- Stack layout: Image on left, info on right (current is good)
+- Image size: Increase to 96x96px on mobile (currently 24/96px w-24 h-24)
+- Quantity controls: Bigger buttons (48x48px)
+- Remove icon: Larger (h-6 w-6 instead of h-5 w-5)
+- Order summary: Not sticky on mobile, place below items
+
+**Mobile Forms:**
+
+- Input fields: Height 56px (better for fat fingers)
+- Label font: 14px minimum
+- Error text: 14px (not 12px - easier to read)
+- Spacing between fields: 20px minimum
+
+#### 4.2 Tablet Optimization (641px - 1024px)
+
+**Goal:** Proper middle-ground layout, not just scaled mobile/desktop
+
+**iPad Portrait (768px):**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Product grid: 2 columns (already correct with sm:grid-cols-2)
+- Filter section: 2 columns (split category/sort)
+- Keep "Reset Filters" on separate row
+
+**iPad Landscape (1024px):**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Product grid: 3 columns (already correct with lg:grid-cols-3)
+- Filters: 3 columns in single row (already correct)
+
+**Tablet Cart Layout:**
+
+- **File:** `/frontend/app/cart/page.tsx`
+- 768px-1023px: Single column (cart + summary stacked)
+- 1024px+: Two columns (already correct with lg:grid-cols-3)
+- Order summary: Sticky at 1024px+ (already correct with sticky top-24)
+
+**Tablet Navigation:**
+
+- **File:** `/frontend/components/layout/Header.tsx`
+- 768px-1023px: Keep mobile hamburger menu
+- 1024px+: Show full desktop nav (already correct with md:flex)
+- Alternative: Show full nav at 768px+ if space allows
+    - Change breakpoint from md: (768px) to sm: (640px) for earlier desktop nav
+
+**Tablet Checkout:**
+
+- **File:** `/frontend/app/checkout/page.tsx`
+- Single column layout until 1024px
+- At 1024px+: Form left, summary right (check current implementation)
+
+#### 4.3 Desktop Refinements (1024px+)
+
+**Goal:** Maximize screen real estate, add hover states, proper spacing
+
+**Wide Desktop (1280px+):**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Product grid: 4 columns at 1280px+ (already correct with xl:grid-cols-4)
+- Consider 5 columns at 1536px (2xl breakpoint): Add 2xl:grid-cols-5
+
+**Desktop Hover States:**
+
+- Already specified in Animation section
+- Verify all interactive elements have hover feedback
+
+**Desktop Spacing:**
+
+- Max-width: 1280px (7xl) for main content (currently using max-w-7xl, correct)
+- Horizontal padding: lg:px-8 (already correct)
+- Section spacing: py-12 lg:py-16 (generous vertical rhythm)
+
+**Desktop Cart:**
+
+- **File:** `/frontend/app/cart/page.tsx`
+- Already using lg:col-span-2 for items, lg:col-span-1 for summary (good)
+- Order summary: Sticky top-24 (already correct)
+- Item cards: Hover effect (subtle shadow increase)
+
+**Desktop Header:**
+
+- **File:** `/frontend/components/layout/Header.tsx`
+- Desktop nav visible at 1024px+ (currently md:768px - consider keeping md)
+- Logo: Full size with text visible (already correct with sm:block)
+- Nav spacing: space-x-8 (already correct)
+
+#### 4.4 Ultra-Wide Displays (1920px+)
+
+**Goal:** Prevent content from stretching too much
+
+**Max Content Width:**
+
+- Keep max-w-7xl (1280px) as maximum (already correct)
+- Center content: mx-auto (already correct)
+- Background: Ivory extends full width (correct)
+
+**Product Grid Cap:**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Maximum 4-5 columns even on ultra-wide (4 is good balance)
+- Don't let cards get too wide (maintain aspect-square for images)
+
+#### 4.5 Touch Gestures & Interactions
+
+**Goal:** Native app-like interactions on mobile
+
+**Image Zoom (Pinch/Double-tap):**
+
+- **File:** `/frontend/app/products/[slug]/page.tsx` (product detail)
+- Add pinch-zoom for product images on mobile
+- Use library: react-pinch-zoom-pan or react-medium-image-zoom
+- Double-tap to zoom in/out
+- Desktop: Click to zoom modal
+
+**Swipe Gestures:**
+
+- **Product Image Gallery:**
+- Swipe left/right to change images
+- Show dot indicators at bottom
+- Use library: react-swipeable or swiper.js
+- **Mobile Menu:**
+- Swipe from left edge to open menu
+- Swipe right to close
+- Optional: Use sheet component that slides in
+
+**Pull-to-Refresh:**
+
+- Optional enhancement for product/cart pages
+- Native-feeling refresh on mobile
+- Show subtle loading indicator
+
+**Long Press:**
+
+- Product card: Long press for quick add to cart (optional)
+- Show haptic feedback if available via Vibration API
+
+#### 4.6 Responsive Typography
+
+**Goal:** Readable text at all screen sizes
+
+**Fluid Typography Scale:**
+
+- Mobile (320px-640px):
+- H1: text-3xl (30px) → text-4xl (36px)
+- H2: text-2xl (24px) → text-3xl (30px)
+- Body: text-base (16px)
+- Small: text-sm (14px)
+- Tablet (641px-1024px):
+- H1: text-4xl (36px) → text-5xl (48px)
+- H2: text-3xl (30px) → text-4xl (36px)
+- Body: text-base (16px) → text-lg (18px)
+- Desktop (1024px+):
+- H1: text-5xl (48px) → text-6xl (60px)
+- H2: text-4xl (36px) → text-5xl (48px)
+- Body: text-lg (18px)
+
+**Line Height Adjustments:**
+
+- Mobile: Tighter line-height (leading-tight for headings)
+- Desktop: More generous (leading-relaxed for body)
+
+**Apply to Key Files:**
+
+- `/frontend/app/page.tsx` - Hero section
+- `/frontend/app/products/page.tsx` - Page title
+- `/frontend/components/product/ProductCard.tsx` - Product name
+
+#### 4.7 Responsive Images
+
+**Goal:** Appropriate image sizes for each device
+
+**Covered in Performance section (2.1):**
+
+- Next.js Image with responsive sizes
+- WebP/AVIF automatic conversion
+- Lazy loading below fold
+
+**Aspect Ratios:**
+
+- Product cards: aspect-square (1:1) on all breakpoints (already correct)
+- Hero image: aspect-video (16:9) on desktop, aspect-square on mobile
+- Cart thumbnails: Fixed 96x96px (adjusted from 80x80 for mobile)
+
+#### 4.8 Breakpoint-Specific Features
+
+**Goal:** Show/hide features appropriately per device
+
+**Desktop-Only Features:**
+
+- Sticky order summary (cart/checkout pages) - already implemented
+- Hover tooltips for product badges
+- Multi-column footer (future enhancement)
+
+**Mobile-Only Features:**
+
+- Pull-to-refresh (optional)
+- Swipe gestures for image galleries
+- Bottom fixed action bar for product detail page
+- Fixed position add to cart button
+- Visible when scrolling past main product info
+
+**Conditional Rendering:**
+
+- Use Tailwind hidden/block utilities: `hidden lg:block`, `block lg:hidden`
+- Avoid duplicating HTML, use CSS to show/hide when possible
+
+### 5. Product Organization & Discovery
+
+#### 5.1 Search Functionality
+
+**Goal:** Fast, intuitive product search with autocomplete
+
+**Search Bar Component:**
+
+- **File:** Create `/frontend/components/product/SearchBar.tsx`
+- Prominent placement in header (between nav and cart)
+- Mobile: Full-width search icon that expands to full search overlay
+- Desktop: Always visible search input (300px width)
+- Icon: Search magnifying glass (Lucide Search icon)
+- Placeholder: "Search products..."
+
+**Search Input Behavior:**
+
+- Debounced input: 300ms delay before API call
+- Minimum 2 characters to trigger search
+- Clear button (X) appears when text entered
+- Keyboard shortcuts: CMD/CTRL + K to focus search
+- ESC key to close/clear search
+
+**Search API:**
+
+- **Backend:** `/backend/src/routes/products.js`
+- Add search endpoint: GET /api/products/search?q={query}
+- Search fields: product name, description, category, tags
+- Use MongoDB text index on name, description, tags fields
+- Return matching products with relevance score
+- Fuzzy matching for typo tolerance (use MongoDB $text with $search)
+- **Frontend API:** `/frontend/lib/api.ts`
+- Add searchProducts(query) function
+- Returns Product[] with search results
+
+**Autocomplete Results:**
+
+- **File:** Create `/frontend/components/product/SearchResults.tsx`
+- Dropdown below search bar
+- Max 8 results shown
+- Each result: Small image, product name, price, category
+- Keyboard navigation: Arrow up/down, Enter to select
+- "View all X results" link at bottom
+- Click result: Navigate to product detail page
+- Click "View all": Navigate to /products?search={query}
+
+**Search Results Page:**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Add search query parameter support: ?search={query}
+- Display search query: "Showing results for '{query}'"
+- Show result count: "Found X products"
+- Keep filters active (can filter search results)
+- Clear search button: "X Clear search"
+- Empty state: "No products found for '{query}'. Try different keywords."
+
+**Search Highlighting:**
+
+- Highlight matching terms in product name/description
+- Use bold or gold color for matched text
+
+#### 5.2 Enhanced Filtering System
+
+**Goal:** Granular filtering for better product discovery
+
+**Price Range Filter:**
+
+- **File:** `/frontend/app/products/page.tsx` (filter section, line 65)
+- Add price range slider component
+- Min: $0, Max: Dynamic based on highest priced product
+- Dual handle slider (min and max)
+- Show current range: "$50 - $200"
+- Update on drag end (not during drag for performance)
+- Library: rc-slider or native HTML range input
+
+**Tags Filter:**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Add tags multi-select
+- Display as pill/badge checkboxes
+- Common tags: "Handmade", "Organic", "Limited Edition", "New Arrival"
+- Fetch available tags from API: GET /api/products/tags
+- Selected tags show as active (gold background)
+- Multiple tags = OR logic (show products matching any tag)
+
+**Availability Filter:**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Checkbox: "In Stock Only"
+- Filters out products with all variants stock = 0
+- Default: unchecked (show all)
+
+**Sale/Discount Filter:**
+
+- Checkbox: "On Sale"
+- Shows only products with compareAtPrice set (discounted items)
+
+**Filter UI Layout:**
+
+- **File:** `/frontend/app/products/page.tsx`
+- Current: Single row with 3 columns (Category, Sort, Reset)
+- Enhanced: Expandable filter panel
+    - Mobile: "Filters" button opens full-screen modal
+    - Desktop: Sidebar on left (fixed) or top expandable section
+    - Active filters shown as pills with X to remove
+    - "Clear all filters" button
+
+**Backend Filter Support:**
+
+- **Backend:** `/backend/src/routes/products.js` (GET /api/products)
+- Add query parameters:
+    - minPrice, maxPrice (number)
+    - tags (comma-separated string)
+    - inStock (boolean)
+    - onSale (boolean)
+- Build MongoDB query with $and conditions
+- Return filtered + paginated results
+
+**Filter Persistence:**
+
+- Store active filters in URL query params
+- Allows sharing filtered views
+- Browser back button restores previous filters
+
+#### 5.3 Product Recommendations
+
+**Goal:** Increase discovery and cross-sell opportunities
+
+**Related Products (Product Detail Page):**
+
+- **File:** `/frontend/app/products/[slug]/page.tsx`
+- Add "You May Also Like" section at bottom
+- Show 4 related products in horizontal row
+- Recommendation logic (backend):
+
+    1. Same category as current product
+    2. Exclude current product
+    3. Prioritize featured products
+    4. Random order for variety
+
+- Use existing ProductCard component
+
+**Similar Products API:**
+
+- **Backend:** Create endpoint GET /api/products/:id/related
+- **File:** `/backend/src/routes/products.js`
+- Query products in same category
+- Limit to 4 results
+- Exclude current product ID
+- Sort by featured first, then random
+
+**Recently Viewed:**
+
+- **File:** Create `/frontend/store/recentlyViewedStore.ts`
+- Zustand store with localStorage persistence
+- Track last 10 viewed product slugs
+- Add to store when viewing product detail
+- Display in sidebar or dedicated section
+- **File:** Create `/frontend/components/product/RecentlyViewed.tsx`
+- Show 4 most recent (excluding current product)
+- Horizontal scroll on mobile
+- Title: "Recently Viewed"
+- Place on product detail page or homepage
+
+**Trending Products (Homepage):**
+
+- **File:** `/frontend/app/page.tsx`
+- Add "Trending Now" section after hero
+- Show 8 products in grid
+- Backend endpoint: GET /api/products/trending
+- Logic: Most viewed in last 7 days (track view count in backend)
+- Or simpler: Newest + featured products
+
+**Frequently Bought Together:**
+
+- Optional future enhancement
+- Requires order data analysis
+- Placeholder: Can manually curate in admin for specific products
+
+#### 5.4 Product Sorting Enhancements
+
+**Goal:** More useful sort options
+
+**Current Sort Options (keep these):**
+
+- Newest First (-createdAt)
+- Price: Low to High (basePrice)
+- Price: High to Low (-basePrice)
+- Name: A to Z (name)
+
+**Add New Sort Options:**
+
+- **File:** `/frontend/app/products/page.tsx` (line 79-88)
+- "Best Selling" (requires order data - future)
+- "Most Viewed" (requires view tracking)
+- "Discount %" (highest discount first)
+
+**For Now:**
+
+- Keep existing 4 sort options (good enough)
+- Add "Featured First" option:
+- Sorts featured products to top
+- Backend: sort={{ featured: -1, createdAt: -1 }}
+
+#### 5.5 Product Quick View
+
+**Goal:** Browse products faster without leaving listing page
+
+**Quick View Modal:**
+
+- **File:** Create `/frontend/components/product/QuickViewModal.tsx`
+- Trigger: "Quick View" button on ProductCard hover (desktop only)
+- Modal content:
+    - Large product image (carousel if multiple)
+    - Product name, price, description (truncated)
+    - Variant selector (size, color)
+    - Quantity input
+    - "Add to Cart" button
+    - "View Full Details" link to product page
+- Close: X button, ESC key, click outside
+- Animation: Fade + scale from center
+
+**ProductCard Integration:**
+
+- **File:** `/frontend/components/product/ProductCard.tsx`
+- Add "Quick View" button (hidden until hover)
+- Button: Absolute positioned at bottom
+- Icon: Eye icon
+- Desktop only (hidden on mobile - too complex for touch)
+
+#### 5.6 Product Organization (Backend)
+
+**Goal:** Better data structure for filtering/search
+
+**MongoDB Indexes:**
+
+- **File:** `/backend/src/models/Product.ts`
+- Current indexes: slug, category, status, featured (already good)
+- Add text index for search: { name: 'text', description: 'text', tags: 'text' }
+- Add compound index for common queries: { category: 1, featured: -1, createdAt: -1 }
+- Add index for price range: { basePrice: 1 }
+
+**Product Tags Field:**
+
+- Already exists in schema (tags: [String])
+- Populate with relevant tags during product creation
+- Examples: "new-arrival", "bestseller", "handmade", "limited-edition", "organic"
+
+**View Count Tracking:**
+
+- **Backend:** `/backend/src/models/Product.ts`
+- Add field: viewCount (Number, default: 0)
+- Add field: lastViewed (Date)
+- **Backend:** `/backend/src/routes/products.js`
+- Increment viewCount on GET /api/products/:slug
+- Update lastViewed timestamp
+- **Frontend:** Automatic (happens when product page loads)
+
+#### 5.7 Empty States & Loading States
+
+**Goal:** Helpful feedback during search/filter
+
+**No Results:**
+
+- **File:** `/frontend/app/products/page.tsx` (line 119-131)
+- Current: Generic "No products found"
+- Enhanced:
+    - If search active: "No results for '{query}'. Try different keywords."
+    - If filters active: "No products match your filters. Try adjusting them."
+    - Show suggestions: "Browse [Category]" buttons
+    - Show recently viewed or trending as fallback
+
+**Loading States:**
+
+- Search autocomplete: Show spinner while searching
+- Filter changes: Skeleton product cards (shimmer effect)
+- Page changes: Same skeleton cards
+
+**Filter Feedback:**
+
+- Show active filter count: "Filters (3)" badge
+- Show result count: "Showing 24 of 156 products"
+- Update count in real-time as filters change
+
+---
+
+## Implementation Approach
+
+### Dependencies to Add
+
+**Frontend:**
+
+```json
+{
+  "framer-motion": "^11.0.0",
+  "react-swipeable": "^7.0.0",
+  "react-medium-image-zoom": "^5.1.0",
+  "rc-slider": "^10.5.0"
+}
+```
+
+**Backend:**
+
+- No new dependencies required (MongoDB text search is built-in)
+
+### Implementation Order
+
+**Phase 1: Performance & Polish (Foundation)**
+
+1. Next.js Image component migration (all img tags)
+2. next.config.js image configuration
+3. Bundle analysis and optimization (lazy loading admin, LazyMotion)
+4. Toast notification system (component + store)
+5. Basic Framer Motion setup
+
+**Phase 2: UI/UX Enhancements**
+
+1. Animation system with Framer Motion
+
+- Page transitions
+- Product card animations
+- Cart badge micro-interactions
+- Button interactions
+
+2. Form field animations
+3. Loading states and skeleton screens
+4. Scroll animations on homepage
+
+**Phase 3: Cart System Improvements**
+
+1. Error handling and retry logic in cartStore
+2. Optimistic updates implementation
+3. Toast integration for errors/success
+4. Backend cart expiry (TTL index)
+5. Cart age warnings
+6. Stock validation on backend
+
+**Phase 4: Responsive Design**
+
+1. Mobile touch target adjustments
+2. Mobile navigation full-screen overlay
+3. Tablet-specific layout tweaks
+4. Touch gestures for image galleries
+5. Responsive typography updates
+6. Bottom action bar for mobile product detail
+
+**Phase 5: Product Discovery**
+
+1. Search bar component and API
+2. Search autocomplete results
+3. Enhanced filter UI (price range, tags, availability)
+4. Backend filter support
+5. Product recommendations (related products)
+6. Recently viewed tracking
+7. Quick view modal
+
+### Key Files Summary
+
+**New Files to Create:**
+
+- `/frontend/components/ui/Toast.tsx` - Toast notification component
+- `/frontend/store/toastStore.ts` - Toast state management
+- `/frontend/components/product/SearchBar.tsx` - Search input component
+- `/frontend/components/product/SearchResults.tsx` - Autocomplete dropdown
+- `/frontend/components/product/QuickViewModal.tsx` - Quick product preview
+- `/frontend/components/product/RecentlyViewed.tsx` - Recently viewed products
+- `/frontend/store/recentlyViewedStore.ts` - Recently viewed state
+- `/frontend/lib/analytics.ts` - Web Vitals tracking
+- `/backend/scripts/cleanup-carts.js` - Abandoned cart cleanup
+
+**Files to Modify:**
+
+- `/frontend/components/product/ProductCard.tsx` - Add animations, Next.js Image, quick view button
+- `/frontend/components/layout/Header.tsx` - Add search bar, animations, touch targets
+- `/frontend/app/products/page.tsx` - Enhanced filters, search support, loading states
+- `/frontend/app/cart/page.tsx` - Optimistic updates, Next.js Image, responsive improvements
+- `/frontend/app/products/[slug]/page.tsx` - Related products, image zoom, mobile action bar
+- `/frontend/store/cartStore.ts` - Error handling, retry logic, optimistic updates
+- `/frontend/components/ui/Button.tsx` - Animation enhancements, touch targets
+- `/frontend/components/ui/Input.tsx` - Focus animations, error shake
+- `/frontend/components/ui/Select.tsx` - Animation improvements
+- `/frontend/next.config.js` - Image configuration
+- `/backend/src/models/Product.ts` - Add viewCount, lastViewed, text indexes
+- `/backend/src/models/Cart.ts` - Add lastActivity, TTL index
+- `/backend/src/routes/products.js` - Search endpoint, filter parameters, related products, view tracking
+- `/backend/src/routes/cart.js` - Stock validation, lastActivity updates
+
+---
+
+## Manual Testing Checklist
+
+### Performance Testing
+
+- [ ] Run Lighthouse audit: Performance > 90, Accessibility > 95
+- [ ] Check bundle size: Main bundle < 200KB gzipped
+- [ ] Test image loading: WebP format served, lazy loading works
+- [ ] Verify no layout shift (CLS < 0.1)
+- [ ] Test on slow 3G network: Acceptable load times
+
+### Animation Testing
+
+- [ ] Page transitions: Smooth fade-in on route changes
+- [ ] Product cards: Staggered reveal on page load
+- [ ] Cart badge: Bounce animation when item added
+- [ ] Buttons: Scale down on click, hover lift
+- [ ] Forms: Focus animation, error shake
+- [ ] Scroll animations: Homepage sections fade in viewport
+
+### Cart Testing
+
+- [ ] Add item to cart: Optimistic update, success feedback
+- [ ] Update quantity: Optimistic update, syncs with backend
+- [ ] Remove item: Fade out, confirmation
+- [ ] Network failure: Show error toast, retry mechanism works
+- [ ] Stock validation: Can't add more than available
+- [ ] Cart expiry: 7-day expiry warning shows
+- [ ] Session persistence: Refresh page, cart remains
+- [ ] Cross-tab sync: Open two tabs, cart changes sync
+
+### Responsive Testing
+
+**Mobile (375px - iPhone SE):**
+
+- [ ] Navigation: Hamburger menu works, full-screen overlay
+- [ ] Touch targets: All buttons min 44x44px
+- [ ] Product grid: 1 column layout
+- [ ] Cart: Image 96x96px, quantity buttons 48x48px
+- [ ] Forms: Input height 56px, easy to tap
+- [ ] Search: Expands to full width overlay
+
+**Tablet (768px - iPad):**
+
+- [ ] Navigation: Desktop nav at 1024px+
+- [ ] Product grid: 2 columns portrait, 3 landscape
+- [ ] Cart: Single column until 1024px
+- [ ] Filters: 2-3 columns in row
+
+**Desktop (1920px):**
+
+- [ ] Product grid: 4 columns, doesn't exceed 5
+- [ ] Content: Max-width 1280px, centered
+- [ ] Hover states: All interactive elements respond
+- [ ] Order summary: Sticky on cart/checkout
+
+### Search & Filter Testing
+
+- [ ] Search: Autocomplete shows after 2 chars, debounced
+- [ ] Search: Keyboard navigation works (arrows, enter, esc)
+- [ ] Search: Results page shows query, count
+- [ ] Price filter: Slider adjusts range, updates results
+- [ ] Tags filter: Multi-select works, OR logic
+- [ ] In Stock filter: Hides out-of-stock products
+- [ ] On Sale filter: Shows only discounted items
+- [ ] URL persistence: Filters stored in URL, shareable
+- [ ] Clear filters: Resets all filters to default
+- [ ] Active filters: Pills show with X to remove
+
+### Recommendations Testing
+
+- [ ] Related products: Show 4 from same category
+- [ ] Recently viewed: Tracks last 10, persists in localStorage
+- [ ] Recently viewed: Shows on product page, excludes current
+- [ ] Quick view: Opens modal on desktop hover
+- [ ] Quick view: Variant selector works, add to cart functions
+
+### Touch Gesture Testing (Mobile Only)
+
+- [ ] Image zoom: Pinch to zoom on product images
+- [ ] Image zoom: Double-tap to zoom in/out
+- [ ] Swipe gallery: Swipe left/right to change images
+- [ ] Mobile menu: Swipe to close (if implemented)
+
+### Error Handling Testing
+
+- [ ] Backend down: Error toast shows, graceful degradation
+- [ ] Network timeout: Retry logic attempts 3 times
+- [ ] Stock insufficient: Error message with available count
+- [ ] Cart sync failure: Recovery mechanism works
+- [ ] Form validation: Errors show clearly, shake animation
+- [ ] 404 product: Helpful error page
+- [ ] Empty search: Helpful suggestions shown
+
+### Accessibility Testing
+
+- [ ] Keyboard navigation: Tab through all interactive elements
+- [ ] Focus indicators: Visible on all focusable elements
+- [ ] Screen reader: Alt text on images, ARIA labels
+- [ ] Color contrast: All text meets WCAG AA (4.5:1)
+- [ ] Form errors: Announced to screen readers
+- [ ] Modal focus trap: Focus stays in modal when open
+
+### Cross-Browser Testing
+
+- [ ] Chrome: All features work
+- [ ] Firefox: All features work
+- [ ] Safari: All features work (especially animations)
+- [ ] Edge: All features work
+- [ ] Mobile Safari (iOS): Touch gestures, animations work
+- [ ] Mobile Chrome (Android): Touch gestures work
+
+---
+
+## Success Criteria
+
+### Performance Metrics
+
+- Lighthouse Performance score: > 90
+- First Contentful Paint (FCP): < 1.5s
+- Largest Contentful Paint (LCP): < 2.5s
+- Cumulative Layout Shift (CLS): < 0.1
+- Time to Interactive (TTI): < 3.5s
+- Bundle size reduction: > 20% from baseline
+
+### User Experience Metrics
+
+- Animations: Smooth 60fps on modern devices
+- Touch targets: 100% compliance with 44x44px minimum
+- Mobile usability: No horizontal scroll, all content accessible
+- Error recovery: All errors have clear messages and recovery paths
+- Cart reliability: 99% success rate for cart operations
+
+### Feature Completeness
+
+- All 5 enhancement areas implemented
+- Zero known bugs in critical paths (cart, checkout, product browsing)
+- Responsive design verified on 5+ breakpoints
+- Search returns relevant results in < 500ms
+- Filters work in combination (search + filters)
+
+### Code Quality
+
+- TypeScript: No type errors
+- Linting: Passes ESLint with zero warnings
+- No console.errors in production
+- Proper error boundaries in place
+- Components are reusable and well-documented
+
+---
+
+## Future Enhancements (Out of Scope)
+
+These features are noted for future consideration but not included in this implementation:
+
+1. **User Accounts & Authentication**
+
+- Customer login/registration
+- Order history
+- Wishlist/favorites
+- Saved addresses
+
+2. **Actual Payment Integration**
+
+- Complete Stripe Checkout integration
+- Order creation in backend
+- Email confirmations
+- Order tracking
+
+3. **Advanced Recommendations**
+
+- AI-powered recommendations
+- Frequently bought together
+- Personalized homepage
+
+4. **Admin Enhancements**
+
+- Order management
+- Analytics dashboard
+- Customer management
+- Bulk product operations
+
+5. **Marketing Features**
+
+- Email newsletter signup
+- Promotional banners
+- Discount codes
+- Product reviews/ratings
+
+6. **Internationalization**
+
+- Multi-language support
+- Multi-currency
+- Region-specific pricing
+
+7. **Social Features**
+
+- Social media sharing
+- Instagram feed integration
+- Customer reviews
+
+These can be implemented in subsequent phases after the core enhancements are complete and validated.

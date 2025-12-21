@@ -113,10 +113,13 @@ export default function ProductDetailPage({
           <div>
             <div className="relative aspect-square bg-ivory rounded-lg overflow-hidden mb-4 border-4 border-brand-gold shadow-xl">
               {primaryImage ? (
-                <img
+                <Image
                   src={primaryImage.url}
                   alt={primaryImage.alt || product.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                  priority
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-ivory">
@@ -130,11 +133,12 @@ export default function ProductDetailPage({
               <div className="grid grid-cols-4 gap-2">
                 {product.images.slice(0, 4).map((image, index) => (
                   <div key={index} className="relative aspect-square bg-ivory rounded border-2 border-brand-gold overflow-hidden cursor-pointer hover:border-brand-ruby transition-all shadow-md hover:shadow-lg">
-                    <img
+                    <Image
                       src={image.url}
                       alt={image.alt || `${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 1024px) 25vw, 12.5vw"
+                      className="object-cover"
                     />
                   </div>
                 ))}

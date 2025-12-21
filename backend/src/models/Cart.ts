@@ -11,6 +11,7 @@ export interface ICart extends Document {
   sessionId: string;
   items: ICartItem[];
   expiresAt: Date;
+  lastActivity: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +35,11 @@ const CartSchema = new Schema(
       type: Date,
       required: true,
       default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    },
+    lastActivity: {
+      type: Date,
+      required: true,
+      default: Date.now,
     },
   },
   {

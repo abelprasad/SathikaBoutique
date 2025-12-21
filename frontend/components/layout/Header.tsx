@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart, Menu, X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { m, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui';
 import { useCartStore } from '@/store/cartStore';
 
@@ -11,10 +12,18 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { initializeCart, getItemCount } = useCartStore();
   const cartItemCount = getItemCount();
+  const previousCount = useRef(cartItemCount);
 
   useEffect(() => {
     initializeCart();
   }, []);
+
+  // Track cart count changes for animation
+  useEffect(() => {
+    if (previousCount.current !== cartItemCount && cartItemCount > 0) {
+      previousCount.current = cartItemCount;
+    }
+  }, [cartItemCount]);
 
   return (
     <header className="bg-gradient-to-r from-ivory via-brand-champagne/20 to-ivory shadow-md sticky top-0 z-50 border-b-4 border-brand-gold">
@@ -79,34 +88,55 @@ export default function Header() {
           {/* Cart Icon */}
           <div className="flex items-center space-x-4">
             <Link href="/cart" className="relative group">
-              <div className="p-2 rounded-full border-2 border-transparent group-hover:border-brand-gold transition-all">
+              <m.div
+                className="p-2 rounded-full border-2 border-transparent group-hover:border-brand-gold transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <ShoppingCart className="h-6 w-6 text-brand-ruby group-hover:text-brand-crimson transition-colors" />
-              </div>
-              {cartItemCount > 0 && (
-                <span className="absolute top-0 right-0 bg-brand-ruby text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white shadow-md">
-                  {cartItemCount}
-                </span>
-              )}
+              </m.div>
+              <AnimatePresence mode="wait">
+                {cartItemCount > 0 && (
+                  <m.span
+                    key={cartItemCount}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [0, 1.3, 1] }}
+                    exit={{ scale: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className="absolute top-0 right-0 bg-brand-ruby text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white shadow-md"
+                  >
+                    {cartItemCount}
+                  </m.span>
+                )}
+              </AnimatePresence>
             </Link>
 
             {/* Mobile Menu Button */}
-            <button
+            <m.button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg border-2 border-brand-gold hover:bg-brand-gold/20 transition-colors"
+              className="md:hidden p-2 rounded-lg border-2 border-brand-gold hover:bg-brand-gold/20 transition-colors min-w-[44px] min-h-[44px]"
+              whileTap={{ scale: 0.95 }}
             >
               {mobileMenuOpen ? (
                 <X className="h-6 w-6 text-brand-ruby" />
               ) : (
                 <Menu className="h-6 w-6 text-brand-ruby" />
               )}
-            </button>
+            </m.button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t-2 border-brand-gold bg-white/80">
-            <div className="flex flex-col space-y-3">
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <m.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden py-4 border-t-2 border-brand-gold bg-white/80 overflow-hidden"
+            >
+              <div className="flex flex-col space-y-3">
               <Link
                 href="/products"
                 className="text-black font-semibold hover:text-brand-ruby hover:bg-brand-gold/10 transition-colors py-2 px-3 rounded-lg border-l-4 border-transparent hover:border-brand-ruby"
@@ -149,9 +179,10 @@ export default function Header() {
               >
                 Contact
               </Link>
-            </div>
-          </div>
-        )}
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
       </nav>
     </header>
   );

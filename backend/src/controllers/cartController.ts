@@ -61,7 +61,8 @@ export const addToCart = async (req: Request, res: Response) => {
     if (variant.stock < quantity) {
       return res.status(400).json({
         status: 'error',
-        message: 'Insufficient stock',
+        message: `Only ${variant.stock} item(s) available in stock`,
+        availableStock: variant.stock,
       });
     }
 
@@ -71,6 +72,7 @@ export const addToCart = async (req: Request, res: Response) => {
       cart = await Cart.create({
         sessionId,
         items: [{ productId, variantId, quantity, addedAt: new Date() }],
+        lastActivity: new Date(),
       });
     } else {
       // Check if item already exists in cart
@@ -93,6 +95,7 @@ export const addToCart = async (req: Request, res: Response) => {
         });
       }
 
+      cart.lastActivity = new Date();
       await cart.save();
     }
 
@@ -153,12 +156,14 @@ export const updateCartItem = async (req: Request, res: Response) => {
       if (variant && variant.stock < quantity) {
         return res.status(400).json({
           status: 'error',
-          message: 'Insufficient stock',
+          message: `Only ${variant.stock} item(s) available in stock`,
+          availableStock: variant.stock,
         });
       }
     }
 
     item.quantity = quantity;
+    cart.lastActivity = new Date();
     await cart.save();
 
     const updatedCart = await Cart.findOne({ sessionId }).populate(
@@ -193,6 +198,7 @@ export const removeFromCart = async (req: Request, res: Response) => {
     }
 
     cart.items = cart.items.filter((item: any) => item._id?.toString() !== itemId);
+    cart.lastActivity = new Date();
     await cart.save();
 
     const updatedCart = await Cart.findOne({ sessionId }).populate(
@@ -227,6 +233,7 @@ export const clearCart = async (req: Request, res: Response) => {
     }
 
     cart.items = [];
+    cart.lastActivity = new Date();
     await cart.save();
 
     res.status(200).json({

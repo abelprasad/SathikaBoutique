@@ -2,8 +2,32 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { cartApi } from '@/lib/api';
+import { toast } from '@/store/toastStore';
 import type { Cart, CartItem } from '@/types/cart';
 import type { Product, ProductVariant } from '@/types/product';
+
+// Retry logic with exponential backoff
+const retryWithBackoff = async <T,>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  baseDelay = 1000
+): Promise<T> => {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxAttempts - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError;
+};
 
 interface CartStore {
   sessionId: string;
@@ -44,10 +68,11 @@ export const useCartStore = create<CartStore>()(
         set({ sessionId, loading: true });
 
         try {
-          const response = await cartApi.get(sessionId);
+          const response = await retryWithBackoff(() => cartApi.get(sessionId));
           set({ items: response.data.items, loading: false });
         } catch (error) {
           console.error('Failed to initialize cart:', error);
+          toast.error('Unable to load cart. Please refresh the page.');
           set({ loading: false });
         }
       },
@@ -62,63 +87,98 @@ export const useCartStore = create<CartStore>()(
         set({ loading: true });
 
         try {
-          const response = await cartApi.addItem(sessionId, {
-            productId: product._id,
-            variantId: variant._id,
-            quantity,
-          });
+          const response = await retryWithBackoff(() =>
+            cartApi.addItem(sessionId, {
+              productId: product._id,
+              variantId: variant._id,
+              quantity,
+            })
+          );
           set({ items: response.data.items, loading: false });
-        } catch (error) {
+          toast.success('Item added to cart!');
+        } catch (error: any) {
           console.error('Failed to add item to cart:', error);
+          const errorMessage = error?.response?.data?.message || 'Failed to add item to cart';
+          toast.error(errorMessage);
           set({ loading: false });
           throw error;
         }
       },
 
       updateQuantity: async (itemId: string, quantity: number) => {
-        const { sessionId } = get();
+        const { sessionId, items } = get();
         if (!sessionId) return;
 
-        set({ loading: true });
+        // Store previous state for rollback
+        const previousItems = [...items];
+
+        // Optimistic update
+        const optimisticItems = items.map(item =>
+          item._id === itemId ? { ...item, quantity } : item
+        );
+        set({ items: optimisticItems, loading: false });
 
         try {
-          const response = await cartApi.updateItem(sessionId, itemId, quantity);
+          const response = await retryWithBackoff(() =>
+            cartApi.updateItem(sessionId, itemId, quantity)
+          );
           set({ items: response.data.items, loading: false });
-        } catch (error) {
+        } catch (error: any) {
           console.error('Failed to update quantity:', error);
-          set({ loading: false });
+          // Rollback on failure
+          set({ items: previousItems, loading: false });
+          const errorMessage = error?.response?.data?.message || 'Failed to update quantity';
+          toast.error(errorMessage);
           throw error;
         }
       },
 
       removeItem: async (itemId: string) => {
-        const { sessionId } = get();
+        const { sessionId, items } = get();
         if (!sessionId) return;
 
-        set({ loading: true });
+        // Store previous state for rollback
+        const previousItems = [...items];
+
+        // Optimistic update
+        const optimisticItems = items.filter(item => item._id !== itemId);
+        set({ items: optimisticItems, loading: false });
 
         try {
-          const response = await cartApi.removeItem(sessionId, itemId);
+          const response = await retryWithBackoff(() =>
+            cartApi.removeItem(sessionId, itemId)
+          );
           set({ items: response.data.items, loading: false });
-        } catch (error) {
+          toast.success('Item removed from cart');
+        } catch (error: any) {
           console.error('Failed to remove item:', error);
-          set({ loading: false });
+          // Rollback on failure
+          set({ items: previousItems, loading: false });
+          const errorMessage = error?.response?.data?.message || 'Failed to remove item';
+          toast.error(errorMessage);
           throw error;
         }
       },
 
       clearCart: async () => {
-        const { sessionId } = get();
+        const { sessionId, items } = get();
         if (!sessionId) return;
 
-        set({ loading: true });
+        // Store previous state for rollback
+        const previousItems = [...items];
+
+        // Optimistic update
+        set({ items: [], loading: false });
 
         try {
-          await cartApi.clear(sessionId);
-          set({ items: [], loading: false });
-        } catch (error) {
+          await retryWithBackoff(() => cartApi.clear(sessionId));
+          toast.success('Cart cleared');
+        } catch (error: any) {
           console.error('Failed to clear cart:', error);
-          set({ loading: false });
+          // Rollback on failure
+          set({ items: previousItems, loading: false });
+          const errorMessage = error?.response?.data?.message || 'Failed to clear cart';
+          toast.error(errorMessage);
           throw error;
         }
       },

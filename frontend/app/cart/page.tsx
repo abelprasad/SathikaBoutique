@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCartStore } from '@/store/cartStore';
 import { formatPrice } from '@/lib/utils';
 import { Button, Spinner } from '@/components/ui';
@@ -103,12 +104,14 @@ export default function CartPage() {
                     {/* Product Image */}
                     <div className="flex-shrink-0">
                       <Link href={`/products/${product.slug}`}>
-                        <div className="w-24 h-24 bg-ivory rounded-lg overflow-hidden border border-brand-champagne/40">
+                        <div className="relative w-24 h-24 bg-ivory rounded-lg overflow-hidden border border-brand-champagne/40">
                           {primaryImage ? (
-                            <img
+                            <Image
                               src={primaryImage.url}
                               alt={primaryImage.alt || product.name}
-                              className="w-full h-full object-cover hover:scale-105 transition-transform"
+                              fill
+                              sizes="96px"
+                              className="object-cover hover:scale-105 transition-transform"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
